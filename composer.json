@@ -1,0 +1,37 @@
+{
+    "name": "urbanodev/votacao",
+    "description": "Votação dentro do sistema, da enquete de show à assembleia formal. Implementa kit-desenvolvimento/modulos/votacao.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.4",
+        "illuminate/database": "^13.0",
+        "illuminate/support": "^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^11.0",
+        "phpunit/phpunit": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "UrbanoDev\\Votacao\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "UrbanoDev\\Votacao\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "UrbanoDev\\Votacao\\VotacaoServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
+}

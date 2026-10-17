@@ -1,0 +1,51 @@
+# urbanodev/votacao
+
+Votação dentro do sistema, da enquete de show à assembleia formal. É a
+implementação Laravel do módulo **`kit-desenvolvimento/modulos/votacao`** — a
+especificação, os invariantes e o porquê de cada decisão estão lá; aqui está o
+código. Divergiu da especificação? A especificação muda primeiro.
+
+## O que entrega (e o que não)
+
+- Migrations, models, ações (`AbrirVotacao`, `RegistrarVoto`, `EncerrarVotacao`,
+  `Apurar`), validação dos perfis e as interfaces das costuras.
+- **Não entrega tela.** Cada sistema faz a sua, com a marca dele.
+
+## Instalar num sistema
+
+```jsonc
+// composer.json do sistema
+"repositories": [{ "type": "vcs", "url": "https://github.com/urbanodev81/votacao" }],
+"require": { "urbanodev/votacao": "0.1.0" }   // versão exata, nunca faixa
+```
+
+Repositório privado: o build Docker recebe o token por secret do BuildKit
+(ver `porte-por-stack.md` no kit). Banco por tenant (stancl):
+`VOTACAO_CARREGAR_MIGRATIONS=false` e
+`php artisan vendor:publish --tag=votacao-migrations`, movendo para
+`database/migrations/tenant`.
+
+## Costuras
+
+Ligue no service provider do sistema. A que não for ligada **recusa**.
+
+| Interface | Quando |
+|---|---|
+| `Contratos\VerificadorDeHumano` | enquete por aparelho ou e-mail (Altcha) |
+| `Contratos\ResolvedorDeElegibilidade` | votação com `elegibilidade` preenchida |
+
+## Testes
+
+```bash
+scripts/testar.sh   # SQLite + Postgres descartável, só precisa de Docker
+```
+
+## Estado
+
+| Passo do kit | |
+|---|---|
+| 1–2 núcleo, perfil enquete, aparelho | ✅ |
+| 3 manifestações e moderação | tabela pronta; ações a fazer |
+| 4 e-mail (voto pendente) | a fazer |
+| 5 conta + elegibilidade | ✅ (núcleo) |
+| 6 formal (documento, recibo, auditoria) | validação do perfil ✅; resto a fazer |

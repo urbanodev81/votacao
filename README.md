@@ -8,7 +8,7 @@ código. Divergiu da especificação? A especificação muda primeiro.
 ## O que entrega (e o que não)
 
 - Migrations, models, ações (`AbrirVotacao`, `RegistrarVoto`, `EncerrarVotacao`,
-  `Apurar`), validação dos perfis e as interfaces das costuras.
+  `Apurar`, `Manifestar`, `Moderar`, `RemoverManifestacao`), validação dos perfis e as interfaces das costuras.
 - **Não entrega tela.** Cada sistema faz a sua, com a marca dele.
 
 ## Instalar num sistema
@@ -34,6 +34,13 @@ Ligue no service provider do sistema. A que não for ligada **recusa**.
 | `Contratos\VerificadorDeHumano` | enquete por aparelho ou e-mail (Altcha) |
 | `Contratos\ResolvedorDeElegibilidade` | votação com `elegibilidade` preenchida |
 
+## Escopo (invariante 5)
+
+Endpoint do sistema entra por `Votacao::localizar($escopo, $uuid)` — o
+`$escopo` vem da autenticação ou do domínio, nunca do request — e passa a
+votação achada a `Moderar` e `RemoverManifestacao`. Id ou token de outra
+votação dá `ModelNotFoundException` (404).
+
 ## Testes
 
 ```bash
@@ -45,7 +52,7 @@ scripts/testar.sh   # SQLite + Postgres descartável, só precisa de Docker
 | Passo do kit | |
 |---|---|
 | 1–2 núcleo, perfil enquete, aparelho | ✅ |
-| 3 manifestações e moderação | tabela pronta; ações a fazer |
+| 3 manifestações e moderação | ✅ (ações; a fila em tela é de cada sistema) |
 | 4 e-mail (voto pendente) | a fazer |
 | 5 conta + elegibilidade | ✅ (núcleo) |
 | 6 formal (documento, recibo, auditoria) | validação do perfil ✅; resto a fazer |

@@ -114,6 +114,15 @@ class Votacao extends Model
         return $query->where('escopo_type', $escopo->getMorphClass())->where('escopo_id', $escopo->getKey());
     }
 
+    /**
+     * Invariante 5: a porta de entrada por endereço. Votação de outro dono não
+     * é "proibida", é inexistente — 404.
+     */
+    public static function localizar(?Model $escopo, string $uuid): self
+    {
+        return static::query()->doEscopo($escopo)->where('uuid', $uuid)->firstOrFail();
+    }
+
     /** Invariante 11: HMAC com o segredo desta votação. */
     public function chaveDoEleitor(string $identificador): string
     {

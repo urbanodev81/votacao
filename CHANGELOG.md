@@ -2,6 +2,8 @@
 
 ## [Não lançado]
 
+## [0.1.0] - 2026-10-17
+
 ### Adicionado
 - Núcleo da votação (17/10/2026): votações, opções, participações, contagens e
   votos (só modo aberto); perfis enquete, interna e formal, com o formal travando

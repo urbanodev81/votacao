@@ -16,6 +16,12 @@ class Participacao extends Model
 
     protected $hidden = ['chave_eleitor', 'recibo_hash'];
 
+    /**
+     * Recibo em claro, só na instância que `RegistrarVoto` devolve: é a única vez
+     * que ele existe. Propriedade declarada, então o Eloquent nunca o grava.
+     */
+    public ?string $recibo = null;
+
     protected function casts(): array
     {
         return [

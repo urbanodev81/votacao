@@ -37,9 +37,13 @@ final readonly class Eleitor
         return new self(Identificacao::Conta, 'conta:'.$usuarioId, $usuarioId);
     }
 
-    /** O documento chega já validado pela costura `VerificadorDeIdentidade` do sistema. */
-    public static function porDocumento(string $documentoNormalizado): self
+    /**
+     * O documento chega já validado pela costura `VerificadorDeIdentidade` do sistema.
+     * `$usuario` é a referência do sistema (ex.: a ficha do associado) para a costura
+     * de elegibilidade; a chave continua sendo só o documento.
+     */
+    public static function porDocumento(string $documentoNormalizado, mixed $usuario = null): self
     {
-        return new self(Identificacao::Documento, 'documento:'.$documentoNormalizado);
+        return new self(Identificacao::Documento, 'documento:'.$documentoNormalizado, $usuario);
     }
 }

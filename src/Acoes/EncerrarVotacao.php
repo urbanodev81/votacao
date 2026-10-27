@@ -5,6 +5,7 @@ namespace UrbanoDev\Votacao\Acoes;
 use Illuminate\Support\Facades\DB;
 use UrbanoDev\Votacao\Enums\StatusDaVotacao;
 use UrbanoDev\Votacao\Models\Contagem;
+use UrbanoDev\Votacao\Models\Escrito;
 use UrbanoDev\Votacao\Models\Votacao;
 
 class EncerrarVotacao
@@ -26,6 +27,7 @@ class EncerrarVotacao
             // Invariante 4: cada contador guarda o xmin do ÚLTIMO voto naquela
             // opção. Regravar todos numa transação só apaga esse rastro.
             Contagem::query()->where('votacao_id', $votacao->id)->update(['total' => DB::raw('total')]);
+            Escrito::query()->where('votacao_id', $votacao->id)->update(['total' => DB::raw('total')]);
 
             return $votacao;
         });

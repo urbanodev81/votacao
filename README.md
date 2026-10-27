@@ -8,7 +8,11 @@ código. Divergiu da especificação? A especificação muda primeiro.
 ## O que entrega (e o que não)
 
 - Migrations, models, ações (`AbrirVotacao`, `RegistrarVoto`, `EncerrarVotacao`,
-  `Apurar`, `Manifestar`, `Moderar`, `RemoverManifestacao`), validação dos perfis e as interfaces das costuras.
+  `Apurar`, `ConferirRecibo`, `Manifestar`, `Moderar`, `RemoverManifestacao`), validação dos perfis e as interfaces das costuras.
+- Quórum (`quorum_tipo` + `quorum_valor`) e voto escrito (opção com `escrito = true`; o texto é o
+  4º argumento de `RegistrarVoto`). No secreto, o texto vira contador em `votacao_escritos`.
+- Recibo no formal: `RegistrarVoto` devolve a participação com `->recibo` em claro, a única vez
+  que ele existe; o banco guarda só o hash.
 - **Não entrega tela.** Cada sistema faz a sua, com a marca dele.
 
 ## Instalar num sistema
@@ -55,4 +59,4 @@ scripts/testar.sh   # SQLite + Postgres descartável, só precisa de Docker
 | 3 manifestações e moderação | ✅ (ações; a fila em tela é de cada sistema) |
 | 4 e-mail (voto pendente) | a fazer |
 | 5 conta + elegibilidade | ✅ (núcleo) |
-| 6 formal (documento, recibo, auditoria) | validação do perfil ✅; resto a fazer |
+| 6 formal (documento, recibo, auditoria) | validação ✅, recibo ✅, quórum e voto escrito ✅ (v0.2.0); auditoria a fazer |

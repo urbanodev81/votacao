@@ -6,6 +6,7 @@ use UrbanoDev\Votacao\Enums\Identificacao;
 use UrbanoDev\Votacao\Enums\ModoDeManifestacao;
 use UrbanoDev\Votacao\Enums\Perfil;
 use UrbanoDev\Votacao\Enums\Sigilo;
+use UrbanoDev\Votacao\Enums\TipoDeQuorum;
 use UrbanoDev\Votacao\Enums\VisibilidadeDoResultado;
 use UrbanoDev\Votacao\Excecoes\PerfilInvalido;
 use UrbanoDev\Votacao\Models\Votacao;
@@ -33,6 +34,16 @@ class ValidadorDePerfil
 
         if ($votacao->fecha_em && $votacao->abre_em && $votacao->fecha_em->lte($votacao->abre_em)) {
             $erros['janela'] = 'O fechamento precisa ser depois da abertura.';
+        }
+
+        $quorum = $votacao->quorum_tipo ?? TipoDeQuorum::Nenhum;
+        $valor = $votacao->quorum_valor;
+        if ($quorum === TipoDeQuorum::PercentualAptos && ($valor < 1 || $valor > 100)) {
+            $erros['quorum'] = 'O quórum em percentual vai de 1 a 100.';
+        } elseif ($quorum === TipoDeQuorum::PercentualAptos && empty($votacao->elegibilidade)) {
+            $erros['quorum'] = 'Quórum sobre os aptos exige o eleitorado definido.';
+        } elseif ($quorum === TipoDeQuorum::Absoluto && $valor < 1) {
+            $erros['quorum'] = 'Informe quantos votantes o quórum exige.';
         }
 
         // Invariante 9: o formal trava os eixos.

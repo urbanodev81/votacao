@@ -25,6 +25,6 @@ class Voto extends Model
 
     public function opcoes(): BelongsToMany
     {
-        return $this->belongsToMany(Opcao::class, 'votacao_voto_opcoes', 'voto_id', 'opcao_id');
+        return $this->belongsToMany(Opcao::class, 'votacao_voto_opcoes', 'voto_id', 'opcao_id')->withPivot('texto_escrito');
     }
 }

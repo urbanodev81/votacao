@@ -4,10 +4,12 @@ namespace UrbanoDev\Votacao\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
+use UrbanoDev\Votacao\Acoes\AbrirVotacao;
 use UrbanoDev\Votacao\Acoes\EncerrarVotacao;
 use UrbanoDev\Votacao\Acoes\RegistrarVoto;
 use UrbanoDev\Votacao\Enums\Identificacao;
 use UrbanoDev\Votacao\Enums\Perfil;
+use UrbanoDev\Votacao\Models\Votacao;
 use UrbanoDev\Votacao\Suporte\Eleitor;
 use UrbanoDev\Votacao\Tests\TestCase;
 
@@ -47,5 +49,28 @@ class RastroDeTransacaoTest extends TestCase
         $depois = DB::table('votacao_contagens')->where('votacao_id', $v->id)->selectRaw('xmin::text as x')->pluck('x')->all();
         $this->assertSame([], array_intersect($depois, $xminParticipacoes));
         $this->assertCount(1, array_unique($depois));
+    }
+
+    public function test_voto_escrito_tambem_perde_o_xmin_no_encerramento(): void
+    {
+        $v = Votacao::query()->create(['perfil' => Perfil::Interna, 'identificacao' => Identificacao::Conta, 'titulo' => 'Presidente']);
+        $v->opcoes()->create(['rotulo' => 'Ana']);
+        $v->opcoes()->create(['rotulo' => 'Outro', 'escrito' => true]);
+        $this->app->make(AbrirVotacao::class)($v);
+        // Um texto que só uma pessoa escreveu: o caso que identifica.
+        $this->app->make(RegistrarVoto::class)($v, Eleitor::porConta(1), $this->ids($v, 1), 'Carla');
+
+        $xminParticipacoes = DB::table('votacao_participacoes')->selectRaw('xmin::text as x')->pluck('x')->all();
+        $antes = DB::table('votacao_escritos')->selectRaw('xmin::text as x')->pluck('x')->all();
+        $this->assertNotEmpty(array_intersect($antes, $xminParticipacoes), 'Premissa: antes de encerrar, o rastro existe.');
+
+        $this->app->make(EncerrarVotacao::class)($v);
+
+        $depois = DB::table('votacao_escritos')->selectRaw('xmin::text as x')->pluck('x')->all();
+        $this->assertSame([], array_intersect($depois, $xminParticipacoes));
+        // Nem vizinho: savepoint dentro do voto daria um xid colado ao da participação.
+        foreach ($xminParticipacoes as $x) {
+            $this->assertNotContains((string) ((int) $x + 1), $antes, 'Escrito gravado em subtransação.');
+        }
     }
 }

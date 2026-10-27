@@ -2,6 +2,23 @@
 
 ## [Não lançado]
 
+## [0.2.0] - 2026-10-27
+
+### Adicionado
+- Quórum (27/10/2026): `quorum_tipo` (`nenhum`, `percentual_aptos`, `absoluto`) e
+  `quorum_valor`; a apuração devolve aptos, mínimo exigido e se foi atingido, visível
+  mesmo no formal antes do encerramento (conta participação, não opção).
+- Voto escrito: uma opção `escrito` por votação; no secreto o texto normalizado vira
+  contador em `votacao_escritos`, regravado no encerramento junto com as contagens; no
+  aberto fica na linha da escolha. Os textos saem só na apuração do painel.
+- Recibo no perfil formal (80 bits, `XXXX-XXXX-XXXX-XXXX`), só o hash no banco, e a ação
+  `ConferirRecibo`.
+- `Eleitor::porDocumento` aceita a referência do sistema para a costura de elegibilidade.
+
+### Corrigido
+- O voto escrito não usa `firstOrCreate`: o savepoint dele dava ao texto um xid vizinho
+  ao da participação. Teste no Postgres cobre.
+
 ## [0.1.0] - 2026-10-17
 
 ### Adicionado

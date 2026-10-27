@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use UrbanoDev\Votacao\Excecoes\OpcaoTravada;
+use UrbanoDev\Votacao\Excecoes\PerfilInvalido;
 
 /**
  * O `rotulo` é copiado na criação: se a música do repertório mudar de nome
@@ -16,6 +17,11 @@ class Opcao extends Model
     protected $table = 'votacao_opcoes';
 
     protected $guarded = ['id'];
+
+    protected function casts(): array
+    {
+        return ['escrito' => 'boolean'];
+    }
 
     protected static function booted(): void
     {
@@ -30,6 +36,10 @@ class Opcao extends Model
         static::saving(function (Opcao $opcao) use ($trava) {
             if (! $opcao->exists || array_diff(array_keys($opcao->getDirty()), ['ordem', 'updated_at'])) {
                 $trava($opcao);
+            }
+            if ($opcao->escrito && static::query()->where('votacao_id', $opcao->votacao_id)
+                ->where('escrito', true)->whereKeyNot($opcao->getKey())->exists()) {
+                throw new PerfilInvalido(['escrito' => 'Só uma opção de voto escrito por votação.']);
             }
         });
         static::deleting($trava);

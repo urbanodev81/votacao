@@ -13,6 +13,7 @@ use UrbanoDev\Votacao\Enums\ModoDeManifestacao;
 use UrbanoDev\Votacao\Enums\Perfil;
 use UrbanoDev\Votacao\Enums\Sigilo;
 use UrbanoDev\Votacao\Enums\StatusDaVotacao;
+use UrbanoDev\Votacao\Enums\TipoDeQuorum;
 use UrbanoDev\Votacao\Enums\VisibilidadeDoResultado;
 use UrbanoDev\Votacao\Suporte\Perfis;
 use UrbanoDev\Votacao\Suporte\ValidadorDePerfil;
@@ -34,6 +35,7 @@ class Votacao extends Model
             'manifestacao' => ModoDeManifestacao::class,
             'resultado' => VisibilidadeDoResultado::class,
             'status' => StatusDaVotacao::class,
+            'quorum_tipo' => TipoDeQuorum::class,
             'elegibilidade' => 'array',
             'abre_em' => 'datetime',
             'fecha_em' => 'datetime',
@@ -49,6 +51,7 @@ class Votacao extends Model
         static::saving(function (Votacao $votacao) {
             if (! $votacao->exists) {
                 $votacao->status ??= StatusDaVotacao::Rascunho;
+                $votacao->quorum_tipo ??= TipoDeQuorum::Nenhum;
                 $votacao->escolha_minimo ??= 1;
                 $votacao->escolha_maximo ??= $votacao->escolha_minimo;
                 foreach (Perfis::padroes($votacao->perfil ??= Perfil::Enquete) as $eixo => $valor) {
@@ -94,6 +97,11 @@ class Votacao extends Model
     public function contagens(): HasMany
     {
         return $this->hasMany(Contagem::class);
+    }
+
+    public function escritos(): HasMany
+    {
+        return $this->hasMany(Escrito::class);
     }
 
     public function manifestacoes(): HasMany

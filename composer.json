@@ -2,7 +2,7 @@
     "name": "urbanodev/votacao",
     "description": "Votação dentro do sistema, da enquete de show à assembleia formal. Implementa kit-desenvolvimento/modulos/votacao.",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "php": "^8.4",
         "illuminate/database": "^13.0",

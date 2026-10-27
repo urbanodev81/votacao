@@ -2,6 +2,11 @@
 
 ## [Não lançado]
 
+## [0.2.1] - 2026-10-27
+
+### Mudado
+- Repositório público, licença MIT: o build dos sistemas baixa sem token.
+
 ## [0.2.0] - 2026-10-27
 
 ### Adicionado

@@ -20,11 +20,10 @@ código. Divergiu da especificação? A especificação muda primeiro.
 ```jsonc
 // composer.json do sistema
 "repositories": [{ "type": "vcs", "url": "https://github.com/urbanodev81/votacao" }],
-"require": { "urbanodev/votacao": "0.1.0" }   // versão exata, nunca faixa
+"require": { "urbanodev/votacao": "0.2.1" }   // versão exata, nunca faixa
 ```
 
-Repositório privado: o build Docker recebe o token por secret do BuildKit
-(ver `porte-por-stack.md` no kit). Banco por tenant (stancl):
+Repositório público (MIT, desde 27/10/2026): o build baixa sem token. Banco por tenant (stancl):
 `VOTACAO_CARREGAR_MIGRATIONS=false` e
 `php artisan vendor:publish --tag=votacao-migrations`, movendo para
 `database/migrations/tenant`.

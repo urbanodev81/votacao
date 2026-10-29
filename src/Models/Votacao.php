@@ -36,6 +36,7 @@ class Votacao extends Model
             'resultado' => VisibilidadeDoResultado::class,
             'status' => StatusDaVotacao::class,
             'quorum_tipo' => TipoDeQuorum::class,
+            'recorte_minimo' => 'integer',
             'elegibilidade' => 'array',
             'abre_em' => 'datetime',
             'fecha_em' => 'datetime',
@@ -53,6 +54,7 @@ class Votacao extends Model
                 $votacao->status ??= StatusDaVotacao::Rascunho;
                 $votacao->quorum_tipo ??= TipoDeQuorum::Nenhum;
                 $votacao->escolha_minimo ??= 1;
+                $votacao->recorte_minimo ??= 10;
                 $votacao->escolha_maximo ??= $votacao->escolha_minimo;
                 foreach (Perfis::padroes($votacao->perfil ??= Perfil::Enquete) as $eixo => $valor) {
                     $votacao->{$eixo} ??= $valor;
@@ -102,6 +104,11 @@ class Votacao extends Model
     public function escritos(): HasMany
     {
         return $this->hasMany(Escrito::class);
+    }
+
+    public function recortes(): HasMany
+    {
+        return $this->hasMany(Recorte::class);
     }
 
     public function manifestacoes(): HasMany

@@ -73,4 +73,35 @@ class RastroDeTransacaoTest extends TestCase
             $this->assertNotContains((string) ((int) $x + 1), $antes, 'Escrito gravado em subtransação.');
         }
     }
+
+    public function test_placar_por_recorte_tambem_perde_o_xmin_no_encerramento(): void
+    {
+        $this->app->instance(\UrbanoDev\Votacao\Contratos\ResolvedorDeRecorte::class, new class implements \UrbanoDev\Votacao\Contratos\ResolvedorDeRecorte
+        {
+            public function recorteDe(Votacao $votacao, Eleitor $eleitor): ?string
+            {
+                return $eleitor->usuario <= 5 ? 'Metalúrgica' : 'Padaria';
+            }
+        });
+        $v = $this->votacao(['perfil' => Perfil::Interna, 'identificacao' => Identificacao::Conta, 'recorte' => 'empresa', 'recorte_minimo' => 5]);
+        $votar = $this->app->make(RegistrarVoto::class);
+        foreach (range(1, 6) as $conta) {
+            $votar($v, Eleitor::porConta($conta), $this->ids($v, $conta % 2));
+        }
+
+        $xminParticipacoes = DB::table('votacao_participacoes')->selectRaw('xmin::text as x')->pluck('x')->all();
+        $antes = DB::table('votacao_recorte_contagens')->selectRaw('xmin::text as x')->pluck('x')->all();
+        $this->assertNotEmpty(array_intersect($antes, $xminParticipacoes), 'Premissa: antes de encerrar, o rastro existe.');
+        // Com vários eleitores, xid vizinho é só o próximo voto; subtransação daria um xid de fora.
+        $this->assertSame([], array_values(array_diff($antes, $xminParticipacoes)), 'Recorte gravado em subtransação.');
+
+        $this->app->make(EncerrarVotacao::class)($v);
+
+        foreach (['votacao_recortes', 'votacao_recorte_contagens'] as $tabela) {
+            $depois = DB::table($tabela)->selectRaw('xmin::text as x')->pluck('x')->all();
+            $this->assertSame([], array_intersect($depois, $xminParticipacoes), $tabela);
+        }
+        // O único da Padaria virou "Outros" com a Metalúrgica (Outros < mínimo puxa o menor visível).
+        $this->assertSame([''], DB::table('votacao_recortes')->pluck('valor')->all());
+    }
 }

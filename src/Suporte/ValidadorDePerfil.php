@@ -46,6 +46,14 @@ class ValidadorDePerfil
             $erros['quorum'] = 'Informe quantos votantes o quórum exige.';
         }
 
+        if ($votacao->recorte !== null && (int) $votacao->recorte_minimo < SupressaoDeRecortes::MINIMO_ABSOLUTO) {
+            $erros['recorte'] = 'O recorte precisa de pelo menos '.SupressaoDeRecortes::MINIMO_ABSOLUTO.' votantes por grupo.';
+        }
+        // Como as opções (invariante 3): o grupo de cada voto foi gravado no recorte que valia.
+        if ($votacao->exists && $votacao->isDirty(['recorte', 'recorte_minimo']) && $votacao->jaRecebeuVoto()) {
+            $erros['recorte'] = 'O recorte não muda depois do primeiro voto.';
+        }
+
         // Invariante 9: o formal trava os eixos.
         if ($votacao->perfil === Perfil::Formal) {
             if ($votacao->sigilo !== Sigilo::Secreto) {

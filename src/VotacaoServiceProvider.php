@@ -5,6 +5,7 @@ namespace UrbanoDev\Votacao;
 use Illuminate\Support\ServiceProvider;
 use UrbanoDev\Votacao\Contratos\Recusa;
 use UrbanoDev\Votacao\Contratos\ResolvedorDeElegibilidade;
+use UrbanoDev\Votacao\Contratos\ResolvedorDeRecorte;
 use UrbanoDev\Votacao\Contratos\VerificadorDeHumano;
 
 class VotacaoServiceProvider extends ServiceProvider
@@ -15,6 +16,7 @@ class VotacaoServiceProvider extends ServiceProvider
 
         // Costura não ligada pelo sistema RECUSA (ver Contratos\Recusa).
         $this->app->bindIf(ResolvedorDeElegibilidade::class, Recusa::class);
+        $this->app->bindIf(ResolvedorDeRecorte::class, Recusa::class);
         $this->app->bindIf(VerificadorDeHumano::class, Recusa::class);
     }
 

@@ -5,10 +5,14 @@ namespace UrbanoDev\Votacao\Acoes;
 use Illuminate\Support\Facades\DB;
 use UrbanoDev\Votacao\Contratos\ResolvedorDeElegibilidade;
 use UrbanoDev\Votacao\Enums\Perfil;
+use UrbanoDev\Votacao\Enums\Sigilo;
 use UrbanoDev\Votacao\Enums\TipoDeQuorum;
 use UrbanoDev\Votacao\Enums\VisibilidadeDoResultado;
+use UrbanoDev\Votacao\Models\Recorte;
+use UrbanoDev\Votacao\Models\RecorteContagem;
 use UrbanoDev\Votacao\Models\Votacao;
 use UrbanoDev\Votacao\Suporte\Apuracao;
+use UrbanoDev\Votacao\Suporte\SupressaoDeRecortes;
 
 /**
  * Especificação 04. A regra de quem vê o quê mora AQUI, no servidor
@@ -71,7 +75,43 @@ class Apurar
             aptos: $aptos,
             quorum: $this->quorum($votacao, $votantes, $aptos),
             escritos: $comEscritos ? $this->escritos($votacao) : null,
+            recorte: $comContagem && $votacao->recorte !== null ? $this->recorte($votacao) : null,
         );
+    }
+
+    /**
+     * Especificação 01, "Placar por recorte". Depois do encerramento a fusão já
+     * está no banco; antes, a mesma regra vale aqui, na leitura.
+     *
+     * @return array{nome:string, minimo:int, grupos:list<array{valor:string, outros:bool, votantes:int, opcoes:array<int,int>}>}
+     */
+    private function recorte(Votacao $votacao): array
+    {
+        $minimo = SupressaoDeRecortes::minimo($votacao->recorte_minimo);
+        $opcoes = $votacao->opcoes()->pluck('votacao_opcoes.id')->all();
+        $grupos = Recorte::query()->where('votacao_id', $votacao->id)->get(['id', 'valor', 'votantes']);
+        $totais = RecorteContagem::query()->whereIn('recorte_id', $grupos->modelKeys())->get(['recorte_id', 'opcao_id', 'total'])
+            ->groupBy('recorte_id');
+
+        $fundir = $votacao->sigilo === Sigilo::Secreto
+            ? SupressaoDeRecortes::fundir($grupos->mapWithKeys(fn ($g) => [$g->valor => (int) $g->votantes])->all(), $minimo)
+            : [];
+
+        $saida = [];
+        foreach ($grupos as $g) {
+            $valor = in_array($g->valor, $fundir, true) ? Recorte::OUTROS : $g->valor;
+            $saida[$valor] ??= ['valor' => $valor, 'outros' => $valor === Recorte::OUTROS, 'votantes' => 0, 'opcoes' => array_fill_keys($opcoes, 0)];
+            $saida[$valor]['votantes'] += (int) $g->votantes;
+            foreach ($totais->get($g->id, []) as $c) {
+                $saida[$valor]['opcoes'][$c->opcao_id] += (int) $c->total;
+            }
+        }
+
+        // Maior grupo primeiro; "Outros" sempre por último.
+        $saida = array_values($saida);
+        usort($saida, fn ($a, $b) => [$a['outros'], -$a['votantes'], $a['valor']] <=> [$b['outros'], -$b['votantes'], $b['valor']]);
+
+        return ['nome' => $votacao->recorte, 'minimo' => $votacao->sigilo === Sigilo::Secreto ? $minimo : 0, 'grupos' => $saida];
     }
 
     /** @return ?array{tipo:string, valor:int, exigido:int, atingido:bool} */

@@ -2,6 +2,18 @@
 
 ## [Não lançado]
 
+## [0.3.0] - 2026-10-29
+
+### Adicionado
+- Placar por recorte (29/10/2026): `recorte` (um por votação; dois deixariam descobrir
+  grupo pequeno por subtração) e `recorte_minimo` (padrão 10, mínimo 5), travados no 1º
+  voto. Contadores por grupo e opção em `votacao_recortes` e `votacao_recorte_contagens`,
+  com o grupo vindo da costura `ResolvedorDeRecorte` dentro da transação do voto (sem a
+  costura, o voto é recusado). Grupo novo nasce com todas as opções zeradas.
+- No secreto, grupo abaixo do mínimo sai em "Outros", e "Outros" pequeno puxa o menor
+  grupo visível; no encerramento a fusão vai para o banco e o resto é regravado junto com
+  as contagens (invariante 4). No aberto, sem mínimo. `Apuracao::$recorte` traz o placar.
+
 ## [0.2.1] - 2026-10-27
 
 ### Mudado

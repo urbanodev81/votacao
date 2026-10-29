@@ -13,6 +13,10 @@ código. Divergiu da especificação? A especificação muda primeiro.
   4º argumento de `RegistrarVoto`). No secreto, o texto vira contador em `votacao_escritos`.
 - Recibo no formal: `RegistrarVoto` devolve a participação com `->recibo` em claro, a única vez
   que ele existe; o banco guarda só o hash.
+- Placar por recorte (v0.3.0): **um** recorte por votação (`recorte` + `recorte_minimo`,
+  padrão 10, nunca abaixo de 5), grupo resolvido na hora do voto pela costura
+  `ResolvedorDeRecorte`. No secreto, grupo pequeno sai em "Outros" e é fundido no banco no
+  encerramento. A apuração devolve em `->recorte`.
 - **Não entrega tela.** Cada sistema faz a sua, com a marca dele.
 
 ## Instalar num sistema
@@ -20,7 +24,7 @@ código. Divergiu da especificação? A especificação muda primeiro.
 ```jsonc
 // composer.json do sistema
 "repositories": [{ "type": "vcs", "url": "https://github.com/urbanodev81/votacao" }],
-"require": { "urbanodev/votacao": "0.2.1" }   // versão exata, nunca faixa
+"require": { "urbanodev/votacao": "0.3.0" }   // versão exata, nunca faixa
 ```
 
 Repositório público (MIT, desde 27/10/2026): o build baixa sem token. Banco por tenant (stancl):
@@ -36,6 +40,7 @@ Ligue no service provider do sistema. A que não for ligada **recusa**.
 |---|---|
 | `Contratos\VerificadorDeHumano` | enquete por aparelho ou e-mail (Altcha) |
 | `Contratos\ResolvedorDeElegibilidade` | votação com `elegibilidade` preenchida |
+| `Contratos\ResolvedorDeRecorte` | votação com `recorte` preenchido |
 
 ## Escopo (invariante 5)
 

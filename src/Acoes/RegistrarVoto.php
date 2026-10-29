@@ -6,6 +6,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 use UrbanoDev\Votacao\Contratos\ResolvedorDeElegibilidade;
+use UrbanoDev\Votacao\Contratos\ResolvedorDeRecorte;
 use UrbanoDev\Votacao\Enums\EstadoDaParticipacao;
 use UrbanoDev\Votacao\Enums\Identificacao;
 use UrbanoDev\Votacao\Enums\Perfil;
@@ -14,6 +15,8 @@ use UrbanoDev\Votacao\Excecoes\VotoRecusado;
 use UrbanoDev\Votacao\Models\Contagem;
 use UrbanoDev\Votacao\Models\Escrito;
 use UrbanoDev\Votacao\Models\Participacao;
+use UrbanoDev\Votacao\Models\Recorte;
+use UrbanoDev\Votacao\Models\RecorteContagem;
 use UrbanoDev\Votacao\Models\Votacao;
 use UrbanoDev\Votacao\Models\Voto;
 use UrbanoDev\Votacao\Suporte\Eleitor;
@@ -28,7 +31,10 @@ use UrbanoDev\Votacao\Suporte\Recibo;
  */
 class RegistrarVoto
 {
-    public function __construct(private ResolvedorDeElegibilidade $elegibilidade) {}
+    public function __construct(
+        private ResolvedorDeElegibilidade $elegibilidade,
+        private ResolvedorDeRecorte $recortes,
+    ) {}
 
     /**
      * @param  list<int|string>  $opcaoIds
@@ -94,12 +100,38 @@ class RegistrarVoto
             }
 
             Contagem::query()->where('votacao_id', $votacao->id)->whereIn('opcao_id', $ids)->increment('total');
+            if ($votacao->recorte !== null) {
+                $this->contarNoRecorte($votacao, $eleitor, $ids);
+            }
             $votacao->newQuery()->whereKey($votacao->id)->increment('total_votantes');
 
             $participacao->recibo = $recibo;
 
             return $participacao;
         });
+    }
+
+    /**
+     * Especificação 01, "Placar por recorte". Como no escrito, nada de
+     * firstOrCreate (savepoint = xid vizinho); a votação travada evita corrida.
+     *
+     * @param  list<int>  $ids
+     */
+    private function contarNoRecorte(Votacao $votacao, Eleitor $eleitor, array $ids): void
+    {
+        $valor = Recorte::normalizar($this->recortes->recorteDe($votacao, $eleitor));
+        $grupo = Recorte::query()->where('votacao_id', $votacao->id)->where('valor', $valor)->value('id');
+
+        if ($grupo === null) {
+            $grupo = Recorte::query()->insertGetId(['votacao_id' => $votacao->id, 'valor' => $valor, 'votantes' => 0]);
+            // Todas as opções zeradas antes de incrementar: a ordem das linhas
+            // não pode dizer em que o primeiro eleitor do grupo votou.
+            RecorteContagem::query()->insert($votacao->opcoes()->pluck('votacao_opcoes.id')
+                ->map(fn ($opcao) => ['recorte_id' => $grupo, 'opcao_id' => $opcao, 'total' => 0])->all());
+        }
+
+        Recorte::query()->whereKey($grupo)->increment('votantes');
+        RecorteContagem::query()->where('recorte_id', $grupo)->whereIn('opcao_id', $ids)->increment('total');
     }
 
     /**
